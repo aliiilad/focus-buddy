@@ -1,6 +1,6 @@
 # iPhone setup
 
-Do this once, after the site is online (see README → "Put it online"). You need its address, for example `https://yourname.github.io/focus-buddy/`. Below it's written as `YOUR-SITE`.
+Do this once, after the site is online (see README → "Put it online"). Yours is **https://aliiilad.github.io/focus-buddy/**
 
 There are three parts:
 
@@ -50,7 +50,7 @@ At the top, tap the shortcut name → **Details**. If "Receive … input from" a
    2. **Get Dates from Input.** Input: **File**.
    3. **If** → **Dates** → **is after** → **Current Date**.
       - Inside the *If*: **Stop This Shortcut**.
-   4. After **End If**: **Open URLs** → `https://YOUR-SITE/?from=a%20social%20app`
+   4. After **End If**: **Open URLs** → `https://aliiilad.github.io/focus-buddy/?from=a%20social%20app`
 
 (Want the page to say the app's name? Make one automation per app and use, for example, `?from=Instagram`.)
 
