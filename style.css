@@ -1,0 +1,807 @@
+/* ---------------------------------------------------------
+   Focus Buddy — a warm, unhurried focus timer.
+   Signature: the "hearth" glow behind the timer that breathes,
+   dims, and shifts color with the state of your session.
+--------------------------------------------------------- */
+
+:root {
+  --ink: #2b1e1a;
+  --ink-2: #3a2a22;
+  --ink-3: #4a352a;
+  --ember: #ff9b54;
+  --ember-soft: #ffd199;
+  --rose: #e8846b;
+  --moss: #8fa37e;
+  --cream: #fbf2e9;
+  --cream-dim: rgba(251, 242, 233, 0.62);
+  --cream-faint: rgba(251, 242, 233, 0.32);
+  --line: rgba(255, 184, 120, 0.16);
+
+  --accent: var(--ember);
+  --accent-soft: var(--ember-soft);
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
+
+  --pulse-speed: 5.5s;
+  --pulse-scale: 1.06;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-body);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Ambient room: a couple of slow, distant embers drifting behind everything */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, var(--rose), transparent 70%);
+  top: -120px;
+  right: -100px;
+  animation: drift 22s ease-in-out infinite;
+}
+
+body::after {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, var(--moss), transparent 70%);
+  bottom: -140px;
+  left: -100px;
+  animation: drift 26s ease-in-out infinite reverse;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(24px, 30px); }
+}
+
+/* ---------------------------------- topbar ---------------------------------- */
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  color: var(--cream);
+}
+
+.brand::before {
+  content: "●";
+  color: var(--ember);
+  font-size: 0.6rem;
+  margin-right: 0.55rem;
+  vertical-align: middle;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.topbar nav button {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--cream-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.topbar nav button:hover {
+  color: var(--cream);
+}
+
+.topbar nav button[aria-current="true"] {
+  color: var(--ink);
+  background: var(--ember-soft);
+}
+
+/* ---------------------------------- main / views ---------------------------------- */
+
+main#app {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.8rem 1.5rem 2.5rem;
+}
+
+.view {
+  animation: rise 0.5s ease both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------------------- home / hearth ---------------------------------- */
+
+.view-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.1rem;
+}
+
+.mode-tabs {
+  display: inline-flex;
+  gap: 0.3rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.3rem;
+}
+
+.mode-tabs button {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--cream-dim);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1.05rem;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.mode-tabs button.active {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.hearth {
+  position: relative;
+  width: min(60vw, 260px);
+  height: min(60vw, 260px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hearth-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0%, var(--accent) 30%, transparent 72%);
+  filter: blur(2px);
+  opacity: 0.55;
+  animation: breathe var(--pulse-speed) ease-in-out infinite;
+  transition: background 0.8s ease, opacity 0.8s ease;
+}
+
+.hearth-glow.layer-2 {
+  inset: 10%;
+  opacity: 0.4;
+  animation-duration: calc(var(--pulse-speed) * 0.85);
+  animation-delay: 0.4s;
+}
+
+.hearth-glow.layer-3 {
+  inset: 22%;
+  opacity: 0.85;
+  filter: blur(0px);
+  background: radial-gradient(circle, var(--accent-soft) 0%, var(--accent) 55%, transparent 75%);
+  animation-duration: calc(var(--pulse-speed) * 0.7);
+  animation-delay: 0.15s;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(var(--pulse-scale)); }
+}
+
+/* state: idle — low, quiet ember */
+.hearth[data-state="idle"] {
+  --pulse-scale: 1.03;
+}
+.hearth[data-state="idle"] .hearth-glow {
+  opacity: 0.28;
+}
+.hearth[data-state="idle"] .hearth-glow.layer-3 {
+  opacity: 0.5;
+}
+
+/* state: paused — banked down, slow */
+.hearth[data-state="paused"] {
+  --pulse-speed: 9s;
+  --pulse-scale: 1.015;
+}
+.hearth[data-state="paused"] .hearth-glow {
+  opacity: 0.22;
+}
+
+/* state: running — full, lively breathing */
+.hearth[data-state="running"] {
+  --pulse-scale: 1.08;
+}
+
+/* state: complete — a bloom, then settles */
+.hearth[data-state="complete"] .hearth-glow {
+  animation: bloom 1.1s ease-out;
+}
+@keyframes bloom {
+  0% { transform: scale(1); opacity: 0.5; }
+  35% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.55; }
+}
+
+.hearth-core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timer-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(3rem, 12vw, 4.2rem);
+  color: var(--cream);
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(255, 155, 84, 0.35);
+}
+
+.cycle-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.cycle-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cream-faint);
+}
+
+.cycle-dots span.filled {
+  background: var(--accent);
+}
+
+.prompt {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.15rem;
+  color: var(--cream);
+  max-width: 26ch;
+  margin: 0;
+}
+
+.task-input {
+  width: 100%;
+  max-width: 320px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--cream);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.8rem 1.1rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.task-input::placeholder {
+  color: var(--cream-faint);
+}
+
+.task-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--ink-3);
+}
+
+.task-input:disabled {
+  opacity: 0.6;
+}
+
+.btn-primary {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--ember-soft), var(--ember));
+  border: none;
+  border-radius: 999px;
+  padding: 0.95rem 2.2rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(255, 155, 84, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(255, 155, 84, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--cream-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  text-decoration: underline;
+  text-decoration-color: var(--cream-faint);
+  text-underline-offset: 3px;
+}
+
+.btn-ghost:hover {
+  color: var(--cream);
+}
+
+.status-line {
+  font-size: 0.9rem;
+  color: var(--cream-dim);
+  min-height: 1.3em;
+  margin: 0;
+}
+
+/* ---------------------------------- stats ---------------------------------- */
+
+.view-stats h1,
+.view-settings h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.7rem;
+  margin: 0 0 1.6rem;
+}
+
+.view-stats h2,
+.view-settings-group-label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream-dim);
+  margin: 2rem 0 0.9rem;
+}
+
+.streak-card {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1.4rem 1.6rem;
+}
+
+.streak-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.6rem;
+  color: var(--ember-soft);
+}
+
+.streak-label {
+  color: var(--cream-dim);
+  font-size: 0.95rem;
+}
+
+.week-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  height: 120px;
+  padding: 0 0.2rem;
+}
+
+.week-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.week-bar {
+  width: 100%;
+  max-width: 28px;
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, var(--ember-soft), var(--ember));
+  box-shadow: 0 0 16px rgba(255, 155, 84, 0.25);
+  min-height: 6px;
+  transition: height 0.4s ease;
+}
+
+.week-day.today .week-bar {
+  background: linear-gradient(180deg, var(--rose), var(--ember));
+}
+
+.week-day span {
+  font-size: 0.72rem;
+  color: var(--cream-faint);
+}
+
+.week-day.today span {
+  color: var(--cream);
+  font-weight: 700;
+}
+
+.session-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-log li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.85rem 1.1rem;
+  font-size: 0.9rem;
+}
+
+.session-log .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ember);
+  flex-shrink: 0;
+}
+
+.session-log .name {
+  flex: 1;
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.session-log .meta {
+  color: var(--cream-dim);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.empty-state {
+  color: var(--cream-dim);
+  font-size: 0.95rem;
+  background: var(--ink-2);
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 1.4rem;
+  text-align: center;
+}
+
+/* ---------------------------------- settings ---------------------------------- */
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.7rem;
+}
+
+.setting-row label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--cream);
+}
+
+.setting-row .hint {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+  margin-top: 0.2rem;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-shrink: 0;
+}
+
+.stepper button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--ink-3);
+  color: var(--cream);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.stepper button:hover {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.stepper .value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  min-width: 3.2rem;
+  text-align: center;
+  color: var(--cream);
+}
+
+.switch {
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--ink-3);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cream-dim);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.switch[aria-pressed="true"] {
+  background: var(--ember);
+  border-color: transparent;
+}
+
+.switch[aria-pressed="true"]::after {
+  transform: translateX(20px);
+  background: var(--ink);
+}
+
+/* ---------------------------------- accessibility & responsive ---------------------------------- */
+
+button:focus-visible,
+input:focus-visible,
+.switch:focus-visible {
+  outline: 2px solid var(--ember-soft);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hearth-glow,
+  body::before,
+  body::after,
+  .view {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 1.1rem 1.2rem;
+  }
+  .topbar .brand {
+    font-size: 1rem;
+  }
+  .topbar nav button {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+  }
+  main#app {
+    padding: 1.8rem 1.1rem 3rem;
+  }
+}
+
+/* ---------------------------------- work-first: credit, gate, emergency ---------------------------------- */
+
+.debug-banner {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--ember-soft);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+}
+
+.credit-pill {
+  font-size: 0.88rem;
+  color: var(--cream-dim);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+}
+
+.credit-pill strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ember-soft);
+  margin-right: 0.2rem;
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.view-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding-top: 0.6rem;
+}
+
+.view-gate h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2rem, 8vw, 2.6rem);
+  margin: 0;
+}
+
+.gate-lede {
+  color: var(--cream-dim);
+  max-width: 34ch;
+  margin: 0 0 0.4rem;
+}
+
+.hearth.hearth-mini {
+  width: min(46vw, 180px);
+  height: min(46vw, 180px);
+}
+
+.hearth-mini .timer-display {
+  font-size: clamp(2rem, 9vw, 2.6rem);
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 380px;
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1.3rem 1.4rem;
+  text-align: center;
+}
+
+.gate-card h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rose);
+  margin: 0;
+}
+
+.gate-card p {
+  font-size: 0.9rem;
+  color: var(--cream-dim);
+  margin: 0;
+}
+
+.gate-countdown {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 2.4rem;
+  color: var(--rose);
+}
+
+/* ---------------------------------- stats: scroll budget ---------------------------------- */
+
+.budget-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.budget-grid div {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+}
+
+.budget-grid strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.7rem;
+  color: var(--cream);
+}
+
+.budget-grid small {
+  font-size: 0.9rem;
+  color: var(--cream-faint);
+}
+
+.budget-grid span {
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+}
+
+/* ---------------------------------- settings: scroll rules ---------------------------------- */
+
+.rules-note {
+  font-size: 0.88rem;
+  color: var(--cream-dim);
+  margin: -0.4rem 0 1rem;
+}
+
+.setting-row .hint.pending {
+  color: var(--ember-soft);
+}
